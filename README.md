@@ -1,4 +1,4 @@
-# This is the beginning of the Python project
-# My idea is that this automation will monitor realtime stocks and will sent 
-# notifications based on some criteria
-# I will update this README file as the project develops
+This is my Python project called StockSender.
+Its purpuse is to run every time the stock market opens, and when it does, 
+compare the opening value of the VOO ETF to the past month avarage.
+If the current price is 15% lower than the past month avarage, it sends an Email to me telling me that I should buy the ETF
