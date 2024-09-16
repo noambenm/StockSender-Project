@@ -11,14 +11,35 @@ def lambda_handler(event, context):
         # Fetching VOO data
         voo = yf.Ticker("VOO")
         voo_history = voo.history(period="1mo")
-        most_recent_open = round(voo_history.iloc[-1]['Open'],2)
-        average_open = round(voo_history['Open'].mean(),2)
+        most_recent_open = round(voo_history.iloc[-1]['Open'], 2)
+        average_open = round(voo_history['Open'].mean(), 2)
         
         # Condition to check if stock is 15% lower than the average
-        if most_recent_open < average_open * 0.95:
+        if most_recent_open < average_open * 0.85:
+            subject = f'VOO Alert: Stock Price Drop - Buy Now!'
+            message = (
+                f"ALERT! VOO opened at {most_recent_open}, which is more than 15% below the average open price over the past month.\n\n"
+                f"Average open price: {average_open}\n"
+                f"Current price: {most_recent_open}\n\n"
+                "This is a significant drop. Consider buying more VOO according to your investment strategy."
+            )
+            
+            # Publish message to SNS
+            snsClient.publish(
+                TopicArn=mySnsTopicArn,
+                Subject=subject,
+                Message=message
+            )
+            return {
+                'statusCode': 200,
+                'body': f"Buy Now message sent: {subject}"
+            }
+        
+        # Condition to check if stock is below 95% but above 85% of average
+        elif most_recent_open < average_open * 0.95:
             subject = f'VOO Alert: VOO opened at {most_recent_open} - Buy Opportunity!'
             message = (
-                f"VOO opened at {most_recent_open}, which is 15% lower than the average open price over the past month.\n\n"
+                f"VOO opened at {most_recent_open}, which is slightly lower than the average open price over the past month.\n\n"
                 f"Average open price: {average_open}\n"
                 f"Current price: {most_recent_open}\n\n"
                 "This might be a good time to buy more VOO. Check your investment strategy."
@@ -34,6 +55,7 @@ def lambda_handler(event, context):
                 'statusCode': 200,
                 'body': f"Message sent: {subject}"
             }
+        
         else:
             subject = f'VOO Status: Normal Trading Level at {most_recent_open}'
             message = (
