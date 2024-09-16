@@ -11,11 +11,11 @@ def lambda_handler(event, context):
         # Fetching VOO data
         voo = yf.Ticker("VOO")
         voo_history = voo.history(period="1mo")
-        most_recent_open = voo_history.iloc[-1]['Open']
-        average_open = voo_history['Open'].mean()
+        most_recent_open = round(voo_history.iloc[-1]['Open'],2)
+        average_open = round(voo_history['Open'].mean(),2)
         
         # Condition to check if stock is 15% lower than the average
-        if most_recent_open < average_open * 0.85:
+        if most_recent_open < average_open * 0.95:
             subject = f'VOO Alert: VOO opened at {most_recent_open} - Buy Opportunity!'
             message = (
                 f"VOO opened at {most_recent_open}, which is 15% lower than the average open price over the past month.\n\n"
