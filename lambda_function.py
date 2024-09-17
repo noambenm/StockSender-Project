@@ -1,6 +1,7 @@
 import json
 import boto3
 import yfinance as yf
+import currency
 
 mySnsTopicArn = 'arn:aws:sns:us-east-1:590184057629:Stonk_Sender_Email_Alert'
 
@@ -21,7 +22,9 @@ def lambda_handler(event, context):
                 f"ALERT! VOO opened at {most_recent_open}, which is more than 15% below the average open price over the past month.\n\n"
                 f"Average open price: {average_open}\n"
                 f"Current price: {most_recent_open}\n\n"
-                "This is a significant drop. Consider buying more VOO according to your investment strategy."
+                f"the price of USD is currently {currency.usd_price}, and a VOO ETF will cost you {round(most_recent_open * currency.usd_price,2)}"
+                f"Your IBI buying commission is 7.5$ so the commission will be {round(7.5 * currency.usd_price, 2)}\n\n"
+                "This is a significant drop. Consider buying more VOO according to your investment strategy.\n"
             )
             
             # Publish message to SNS
@@ -41,7 +44,9 @@ def lambda_handler(event, context):
             message = (
                 f"VOO opened at {most_recent_open}, which is slightly lower than the average open price over the past month.\n\n"
                 f"Average open price: {average_open}\n"
-                f"Current price: {most_recent_open}\n\n"
+                f"Current price: {most_recent_open}\n"
+                f"the price of USD is currently {currency.usd_price}, and a VOO ETF will cost you {round(most_recent_open * currency.usd_price,2)}\n"
+                f"Your IBI buying commission is 7.5$ so the commission will be {round(7.5 * currency.usd_price, 2)}\n\n"
                 "This might be a good time to buy more VOO. Check your investment strategy."
             )
             
@@ -61,6 +66,8 @@ def lambda_handler(event, context):
             message = (
                 f"VOO is trading at {most_recent_open}, which is within the normal range.\n\n"
                 f"Average open price over the past month: {average_open}\n"
+                f"the price of USD is currently {currency.usd_price}, and a VOO ETF will cost you {round(most_recent_open * currency.usd_price,2)}\n"
+                f"Your IBI buying commission is 7.5$ so the commission will be {round(7.5 * currency.usd_price, 2)}\n\n"
                 "No significant price drop detected. No action required."
             )
             
