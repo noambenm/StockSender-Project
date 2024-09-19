@@ -10,14 +10,6 @@ mySnsTopicArn = os.environ.get('SNS_TOPIC_ARN')
 # Initiate the SNS feature within the lambda function using boto3
 snsClient = boto3.client('sns')
 
-# Defines a function that converts USD to NIS in real time
-def get_usd_to_ils():
-
-    currency_pair = 'USDILS=X'
-    ticker = yf.Ticker(currency_pair)
-    data = ticker.history(period='1d', interval='1m')
-    return round(data['Open'].iloc[-1], 2)
-
 # Defines a function that publishes the SNS topic using the ARN, subject and message from the messages.py file
 def publish_to_sns(topic_arn, subject, message):
 
@@ -36,22 +28,23 @@ def lambda_handler(event, context):
     try:
         # Fetching VOO data and establishes veriables
         voo = yf.Ticker("VOO")
-        voo_history = voo.history(period="1mo")
+        usd = yf.Ticker('USDILS=X')
         current_value = voo.info['ask']
+        usd_value = usd.info['ask']
+        voo_history = voo.history(period="1mo")
         average_open = round(voo_history['Open'].mean(), 2)
-        usd_price = get_usd_to_ils()
-        commission = round(7.5 * usd_price, 2)
+        commission = round(7.5 * usd_value, 2)
 
         # Condition to check if stock is lower than the average and sends the corresponding message
         if current_value < average_open * 0.85:
             subject = f'VOO Alert: Stock Price Drop and it is {current_value} - Buy Now!'
-            message = messages.buy_now_message(current_value, average_open, usd_price, commission)
+            message = messages.buy_now_message(current_value, average_open, usd_value, commission)
         elif current_value < average_open * 0.95:
             subject = f'VOO Alert: VOO opened at {current_value} - Buy Opportunity!'
-            message = messages.buy_opportunity_message(current_value, average_open, usd_price, commission)
+            message = messages.buy_opportunity_message(current_value, average_open, usd_value, commission)
         else:
             subject = f'VOO Status: Normal Trading Level at {current_value}'
-            message = messages.normal_status_message(current_value, average_open, usd_price, commission)
+            message = messages.normal_status_message(current_value, average_open, usd_value, commission)
 
         # Publish message to SNS
         publish_to_sns(mySnsTopicArn, subject, message)
