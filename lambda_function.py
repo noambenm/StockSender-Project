@@ -2,11 +2,25 @@ import json
 import boto3
 import yfinance as yf
 import currency
+import os
+import logging
 
-mySnsTopicArn = 'arn:aws:sns:us-east-1:590184057629:Stonk_Sender_Email_Alert'
+mySnsTopicArn = os.environ.get('SNS_TOPIC_ARN')
+snsClient = boto3.client('sns')
+
+def publish_to_sns(topic_arn, subject, message):
+
+    try:
+        snsClient.publish(
+            TopicArn=topic_arn,
+            Subject=subject,
+            Message=message
+        )
+    except Exception as e:
+        logging.error(f"Failed to publish message to SNS: {str(e)}")
+        raise
 
 def lambda_handler(event, context):
-    snsClient = boto3.client('sns')
     
     try:
         # Fetching VOO data
@@ -26,13 +40,10 @@ def lambda_handler(event, context):
                 f"Your IBI buying commission is 7.5$ so the commission will be {round(7.5 * currency.usd_price, 2)}₪\n\n"
                 "This is a significant drop. Consider buying more VOO according to your investment strategy.\n"
             )
+
+            publish_to_sns(mySnsTopicArn, subject, message)
+            logging.info(f"Buy Now message sent successfully. Subject: {subject}")
             
-            # Publish message to SNS
-            snsClient.publish(
-                TopicArn=mySnsTopicArn,
-                Subject=subject,
-                Message=message
-            )
             return {
                 'statusCode': 200,
                 'body': f"Buy Now message sent: {subject}"
@@ -51,11 +62,9 @@ def lambda_handler(event, context):
             )
             
             # Publish message to SNS
-            snsClient.publish(
-                TopicArn=mySnsTopicArn,
-                Subject=subject,
-                Message=message
-            )
+            publish_to_sns(mySnsTopicArn, subject, message)
+            logging.info(f"Buy Opportunity message sent successfully. Subject: {subject}")
+
             return {
                 'statusCode': 200,
                 'body': f"Message sent: {subject}"
@@ -71,12 +80,9 @@ def lambda_handler(event, context):
                 "No significant price drop detected. No action required."
             )
             
-            # Publish message to SNS
-            snsClient.publish(
-                TopicArn=mySnsTopicArn,
-                Subject=subject,
-                Message=message
-            )
+            publish_to_sns(mySnsTopicArn, subject, message)
+            logging.info(f"Normal Trading Level message sent successfully. Subject: {subject}")     
+            
             return {
                 'statusCode': 200,
                 'body': f"Message sent: {subject}"
